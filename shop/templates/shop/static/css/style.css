@@ -1,0 +1,15 @@
+.card-img-top {
+    height: 250px;
+    width: 100%;
+    object-fit: contain;
+    padding: 10px;
+}
+
+.card {
+    height: 100%;
+}
+
+.card-body {
+    display: flex;
+    flex-direction: column;
+}

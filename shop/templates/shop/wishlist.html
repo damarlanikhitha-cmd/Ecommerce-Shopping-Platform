@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Wishlist</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .wishlist-container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .wishlist-item {
+            background: white;
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .wishlist-item img {
+            width: 180px;
+            height: 180px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-info h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .description {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .price {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            text-decoration: none;
+            padding: 10px 18px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .cart-btn {
+            background: #ff9900;
+        }
+
+        .buy-btn {
+            background: #fb641b;
+        }
+
+        .remove-btn {
+            background: #dc3545;
+        }
+        .out-of-stock {
+            background: #777;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .empty {
+            text-align: center;
+            background: white;
+            padding: 50px;
+            border-radius: 10px;
+        }
+
+        .empty a {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 12px 20px;
+            background: #2874f0;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>My Wishlist ❤️</h1>
+
+    <div class="wishlist-container">
+
+        {% if wishlist_items %}
+
+            {% for item in wishlist_items %}
+
+                <div class="wishlist-item">
+
+                    {% if item.product.image %}
+                        <img src="{{ item.product.image.url }}"
+                             alt="{{ item.product.name }}">
+                    {% else %}
+                        <img src="https://via.placeholder.com/180"
+                             alt="No Image">
+                    {% endif %}
+
+                    <div class="product-info">
+
+                        <h2>{{ item.product.name }}</h2>
+
+                        <p class="description">
+                            {{ item.product.description }}
+                        </p>
+
+                        <div class="price">
+                            ₹{{ item.product.price }}
+                        </div>
+
+                        <div class="buttons">
+
+    {% if item.product.stock > 0 %}
+
+        <!-- Add to Cart -->
+        <a href="{% url 'shop:wishlist_add_to_cart' item.product.id %}"
+           class="btn cart-btn">
+            🛒 Add to Cart
+        </a>
+
+        <!-- Buy Now -->
+        <a href="{% url 'shop:wishlist_buy_now' item.product.id %}"
+           class="btn buy-btn">
+            ⚡ Buy Now
+        </a>
+
+    {% else %}
+
+        <span class="out-of-stock">
+            Out of Stock
+        </span>
+
+    {% endif %}
+
+    <!-- Remove Wishlist -->
+    <a href="{% url 'shop:remove_from_wishlist' item.product.id %}"
+       class="btn remove-btn">
+        ❌ Remove
+    </a>
+
+</div>
+
+                    </div>
+
+                </div>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="empty">
+
+                <h2>Your Wishlist is Empty ❤️</h2>
+
+                <p>
+                    Save your favorite products here and buy them later.
+                </p>
+
+                <a href="{% url 'shop:home' %}">
+                    Continue Shopping
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</body>
+</html>

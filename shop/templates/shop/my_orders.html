@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Orders</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <style>
+        body {
+            background: #f5f5f5;
+        }
+
+        .orders-container {
+            max-width: 1000px;
+            margin: 40px auto;
+        }
+
+        .order-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+
+        .order-header {
+            background: #f7f7f7;
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .order-body {
+            padding: 20px;
+        }
+
+        .product-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .product-image {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 5px;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .order-footer {
+            padding: 15px 20px;
+            background: #fafafa;
+            border-top: 1px solid #ddd;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container orders-container">
+
+    <h2 class="text-center mb-4">My Orders</h2>
+
+    {% for order in orders %}
+
+    <div class="order-card">
+
+        <!-- ORDER HEADER -->
+        <div class="order-header">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <div>
+                    <strong>Order #{{ order.id }}</strong>
+
+                    <p class="mb-0">
+                        Ordered on:
+                        {{ order.created_at|date:"d M Y, h:i A" }}
+                    </p>
+                </div>
+
+                <div>
+
+                    {% if order.status == "Pending" %}
+
+                        <span class="badge bg-warning text-dark">
+                            🟡 Pending
+                        </span>
+
+                    {% elif order.status == "Shipped" %}
+
+                        <span class="badge bg-info">
+                            🔵 Shipped
+                        </span>
+
+                    {% elif order.status == "Delivered" %}
+
+                        <span class="badge bg-success">
+                            🟢 Delivered
+                        </span>
+
+                    {% elif order.status == "Cancelled" %}
+
+                        <span class="badge bg-danger">
+                            🔴 Cancelled
+                        </span>
+
+                    {% elif order.status == "Returned" %}
+
+                        <span class="badge bg-secondary">
+                            ↩️ Returned
+                        </span>
+
+                    {% elif order.status == "Exchanged" %}
+
+                        <span class="badge bg-primary">
+                            🔄 Exchanged
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ORDER PRODUCTS -->
+<div class="order-body">
+
+    {% for item in order.orderitem_set.all %}
+
+    <div class="product-item">
+
+        {% if item.product.image %}
+
+            <img src="{{ item.product.image.url }}"
+                 class="product-image"
+                 alt="{{ item.product.name }}">
+
+        {% else %}
+
+            <div class="product-image d-flex align-items-center justify-content-center">
+                No Image
+            </div>
+
+        {% endif %}
+
+
+        <div class="product-info">
+
+            <h5>{{ item.product.name }}</h5>
+
+            <p class="mb-1">
+                Quantity: {{ item.quantity }}
+            </p>
+
+            <p class="mb-1">
+                Price: ₹{{ item.price }}
+            </p>
+
+
+            <!-- PRODUCT STATUS -->
+
+            {% if item.status == "Active" %}
+
+                <span class="badge bg-success">
+                    🟢 Active
+                </span>
+
+            {% elif item.status == "Cancelled" %}
+
+                <span class="badge bg-danger">
+                    🔴 Cancelled
+                </span>
+
+            {% endif %}
+
+
+            <!-- CANCEL INDIVIDUAL PRODUCT -->
+
+            {% if order.status == "Pending" and item.status == "Active" %}
+
+                <div class="mt-2">
+
+                    <a href="{% url 'shop:cancel_order_item' item.id %}"
+                       class="btn btn-danger btn-sm"
+                       onclick="return confirm('Are you sure you want to cancel {{ item.product.name }}?');">
+
+                        ❌ Cancel This Product
+
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    {% empty %}
+
+        <p class="text-muted">
+            Product details are not available for this order.
+        </p>
+
+    {% endfor %}
+
+
+    <!-- PAYMENT METHOD -->
+
+    <div class="mt-3">
+
+        <strong>Payment Method:</strong>
+        {{ order.payment_method }}
+
+    </div>
+
+</div>
+
+        <!-- ORDER FOOTER -->
+
+<div class="order-footer">
+
+    <div class="d-flex justify-content-between align-items-center">
+
+        <div>
+            <p class="mb-1">
+                <strong>Payment Method:</strong>
+                {{ order.payment_method }}
+            </p>
+
+            <p class="mb-0">
+                <strong>Total:</strong>
+                ₹{{ order.display_total|floatformat:2 }}
+            </p>
+        </div>
+
+        <div class="action-buttons">
+
+
+                    <!-- RETURN / EXCHANGE -->
+
+                    {% if order.status == "Delivered" %}
+
+                        <button type="button"
+                                class="btn btn-warning btn-sm"
+                                data-bs-toggle="modal"
+                                data-bs-target="#returnModal{{ order.id }}">
+                            ↩️ Return
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-info btn-sm"
+                                data-bs-toggle="modal"
+                                data-bs-target="#exchangeModal{{ order.id }}">
+                            🔄 Exchange
+                        </button>
+
+                    {% endif %}
+
+
+                    <!-- INVOICE -->
+
+                    <a href="{% url 'shop:download_invoice' order.id %}"
+                       class="btn btn-success btn-sm">
+                        📄 Download Invoice
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- RETURN MODAL -->
+
+    {% if order.status == "Delivered" %}
+
+    <div class="modal fade"
+         id="returnModal{{ order.id }}"
+         tabindex="-1">
+
+        <div class="modal-dialog">
+
+            <div class="modal-content">
+
+                <form method="POST"
+                      action="{% url 'shop:return_order' order.id %}">
+
+                    {% csrf_token %}
+
+                    <div class="modal-header">
+
+                        <h5 class="modal-title">
+                            Return Order #{{ order.id }}
+                        </h5>
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal">
+                        </button>
+
+                    </div>
+
+                    <div class="modal-body">
+
+                        <label class="form-label">
+                            Return Reason
+                        </label>
+
+                        <textarea name="return_reason"
+                                  class="form-control"
+                                  rows="4"
+                                  required
+                                  placeholder="Why do you want to return this order?">
+                        </textarea>
+
+                    </div>
+
+                    <div class="modal-footer">
+
+                        <button type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+                            Close
+                        </button>
+
+                        <button type="submit"
+                                class="btn btn-warning">
+                            Submit Return
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- EXCHANGE MODAL -->
+
+    <div class="modal fade"
+         id="exchangeModal{{ order.id }}"
+         tabindex="-1">
+
+        <div class="modal-dialog">
+
+            <div class="modal-content">
+
+                <form method="POST"
+                      action="{% url 'shop:exchange_order' order.id %}">
+
+                    {% csrf_token %}
+
+                    <div class="modal-header">
+
+                        <h5 class="modal-title">
+                            Exchange Order #{{ order.id }}
+                        </h5>
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal">
+                        </button>
+
+                    </div>
+
+                    <div class="modal-body">
+
+                        <label class="form-label">
+                            Exchange Reason
+                        </label>
+
+                        <textarea name="exchange_reason"
+                                  class="form-control"
+                                  rows="4"
+                                  required
+                                  placeholder="Why do you want to exchange this order?">
+                        </textarea>
+
+                    </div>
+
+                    <div class="modal-footer">
+
+                        <button type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+                            Close
+                        </button>
+
+                        <button type="submit"
+                                class="btn btn-info">
+                            Submit Exchange
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+    {% empty %}
+
+        <div class="alert alert-info text-center">
+            You have no orders yet.
+        </div>
+
+    {% endfor %}
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+</script>
+
+</body>
+</html>
