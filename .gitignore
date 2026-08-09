@@ -12,6 +12,7 @@ venv/
 
 # Django
 db.sqlite3
+database_backup.sql
 
 # Media/uploads
 media/
