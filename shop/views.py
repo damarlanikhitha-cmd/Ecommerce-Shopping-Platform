@@ -537,13 +537,16 @@ def payment(request):
             f"Thank you for shopping with us!"
         )
 
-        send_mail(
-            subject="Order Confirmation",
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=["test@example.com"],
-            fail_silently=False,
-        )
+        customer_email = request.user.email
+
+        if customer_email:
+            send_mail(
+                subject="Order Confirmation",
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[customer_email],
+                fail_silently=False,
+            )
 
         # Clear checkout session data
         request.session.pop("order_name", None)
