@@ -596,9 +596,8 @@ def cancel_order(request, order_id):
         user=request.user
     )
 
-    if order.status == "Pending":
+    if request.method == "POST" and order.status == "Pending":
 
-        # Restore product stock
         order_items = OrderItem.objects.filter(
             order=order
         )
@@ -607,11 +606,9 @@ def cancel_order(request, order_id):
             item.product.stock += item.quantity
             item.product.save()
 
-        # Cancel the order
         order.status = "Cancelled"
         order.save()
 
-        # Cancel all order items
         order_items.update(status="Cancelled")
 
     return redirect("shop:my_orders")
