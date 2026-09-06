@@ -743,7 +743,11 @@ def product_detail(request, product_id):
     })
 @login_required(login_url="/login/")
 def download_invoice(request, order_id):
-    order = Order.objects.get(id=order_id)
+    order = get_object_or_404(
+    Order,
+    id=order_id,
+    user=request.user
+)
 
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="invoice_{order.id}.pdf"'
