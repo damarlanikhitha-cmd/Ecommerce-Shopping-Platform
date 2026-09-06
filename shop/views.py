@@ -390,26 +390,18 @@ def remove_from_wishlist(request, product_id):
 
 @login_required(login_url="/login/")
 def wishlist_buy_now(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
+    product = get_object_or_404(
+        Product,
+        id=product_id
+    )
 
     if product.stock <= 0:
         return redirect("shop:wishlist")
 
-    cart, created = Cart.objects.get_or_create(
-        user=request.user
-    )
-
-    CartItem.objects.filter(cart=cart).delete()
-
-    CartItem.objects.create(
-        cart=cart,
-        product=product,
-        quantity=1
-    )
+    # Store only the selected product for Buy Now
     request.session["buy_now_product_id"] = product.id
 
     return redirect("shop:checkout")
-
 @login_required(login_url="/login/")
 def payment(request):
 
