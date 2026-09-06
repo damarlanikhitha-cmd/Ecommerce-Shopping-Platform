@@ -8,6 +8,7 @@ from reportlab.pdfgen import canvas
 from django.http import HttpResponse
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Avg
 from django.db.models import Sum
 from django.core.paginator import Paginator
@@ -429,19 +430,9 @@ def payment(request):
         if not total:
             return redirect("shop:checkout")
 
-        # Create order
-        order = Order.objects.create(
-            user=request.user,
-            customer_name=name,
-            phone=phone,
-            address=address,
-            total_amount=total,
-            payment_method=payment_method,
-        )
-
-        # -----------------------------
+        # ==================================================
         # BUY NOW ORDER
-        # -----------------------------
+        # ==================================================
         if buy_now_product_id:
 
             product = get_object_or_404(
@@ -449,49 +440,92 @@ def payment(request):
                 id=buy_now_product_id
             )
 
-            # Create one OrderItem
-            OrderItem.objects.create(
-                order=order,
-                product=product,
-                quantity=1,
-                price=product.price
-            )
+            # Check stock before creating the order
+            if product.stock < 1:
+                return redirect("shop:checkout")
 
-            # Reduce stock
-            product.stock -= 1
-            product.save()
+            with transaction.atomic():
+
+                # Create order only after stock check
+                order = Order.objects.create(
+                    user=request.user,
+                    customer_name=name,
+                    phone=phone,
+                    address=address,
+                    total_amount=total,
+                    payment_method=payment_method,
+                )
+
+                # Create OrderItem
+                OrderItem.objects.create(
+                    order=order,
+                    product=product,
+                    quantity=1,
+                    price=product.price
+                )
+
+                # Reduce stock
+                product.stock -= 1
+                product.save()
 
             # Remove Buy Now session
             request.session.pop("buy_now_product_id", None)
 
-        # -----------------------------
+        # ==================================================
         # CART ORDER
-        # -----------------------------
+        # ==================================================
         else:
 
-            cart = Cart.objects.get(user=request.user)
+            cart = get_object_or_404(
+                Cart,
+                user=request.user
+            )
 
-            cart_items = CartItem.objects.filter(cart=cart)
+            cart_items = CartItem.objects.filter(
+                cart=cart
+            )
 
+            # Check whether cart is empty
+            if not cart_items.exists():
+                return redirect("shop:cart")
+
+            # Check stock for ALL cart items first
             for item in cart_items:
+                if item.quantity > item.product.stock:
+                    return redirect("shop:cart")
 
-                OrderItem.objects.create(
-                    order=order,
-                    product=item.product,
-                    quantity=item.quantity,
-                    price=item.product.price
+            with transaction.atomic():
+
+                # Create order only after all stock checks pass
+                order = Order.objects.create(
+                    user=request.user,
+                    customer_name=name,
+                    phone=phone,
+                    address=address,
+                    total_amount=total,
+                    payment_method=payment_method,
                 )
 
-                # Reduce stock
-                item.product.stock -= item.quantity
-                item.product.save()
+                for item in cart_items:
 
-            # Clear cart
-            cart_items.delete()
+                    # Create OrderItem
+                    OrderItem.objects.create(
+                        order=order,
+                        product=item.product,
+                        quantity=item.quantity,
+                        price=item.product.price
+                    )
 
-        # -----------------------------
+                    # Reduce stock
+                    item.product.stock -= item.quantity
+                    item.product.save()
+
+                # Clear cart
+                cart_items.delete()
+
+        # ==================================================
         # EMAIL
-        # -----------------------------
+        # ==================================================
 
         message = (
             f"Hello {name},\n\n"
