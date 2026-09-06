@@ -145,8 +145,6 @@ class Review(models.Model):
         return f"{self.user.username} - {self.product.name}"   
 
 
-def __str__(self):
-        return self.customer_name
 
 class Wishlist(models.Model):
     user = models.ForeignKey(
@@ -166,8 +164,8 @@ class Wishlist(models.Model):
             )
         ]
 
-        def __str__(self):
-            return f"{self.user.username} - {self.product.name}"
+    def __str__(self):
+        return f"{self.user.username} - {self.product.name}"
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(max_length=15, blank=True)
