@@ -67,7 +67,6 @@ path(
     views.remove_from_wishlist,
     name="remove_from_wishlist"
 ),
-    path("wishlist/", views.wishlist, name="wishlist"),
     path("payment/", views.payment, name="payment"),
     path("order-success/", views.order_success, name="order_success"),
     path("my-orders", views.my_orders, name="my_orders"),
@@ -98,7 +97,7 @@ path(
     views.exchange_order,
     name="exchange_order"
 ),
-    path("review/,<int:product_id>/", views.add_review, name="add_review"),
+    path("review/<int:product_id>/", views.add_review, name="add_review"),
     path("product/<int:product_id>/", views.product_detail, name="product_detail"), 
     path("invoice/<int:order_id>/", views.download_invoice, name="download_invoice"),
     path("admin-dashboard/", views.admin_dashboard, name="admin_dashboard"),
