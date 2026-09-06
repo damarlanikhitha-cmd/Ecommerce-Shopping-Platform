@@ -693,20 +693,37 @@ def exchange_order(request, order_id):
 
 @login_required(login_url="/login/")
 def add_review(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
+    product = get_object_or_404(
+        Product,
+        id=product_id
+    )
+
+    # Check whether the user purchased this product
+    has_purchased = OrderItem.objects.filter(
+        order__user=request.user,
+        order__status="Delivered",
+        product=product
+    ).exists()
+
+    if not has_purchased:
+        return redirect("shop:product_detail", product_id=product.id)
 
     if request.method == "POST":
         rating = request.POST.get("rating")
         comment = request.POST.get("comment")
 
-        Review.objects.create(
-            user=request.user,
-            product=product,
-            rating=rating,
-            comment=comment
-        )
+        if rating and comment:
+            Review.objects.create(
+                user=request.user,
+                product=product,
+                rating=rating,
+                comment=comment
+            )
 
-    return redirect("shop:home")
+    return redirect(
+        "shop:product_detail",
+        product_id=product.id
+    )
 
 def product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
