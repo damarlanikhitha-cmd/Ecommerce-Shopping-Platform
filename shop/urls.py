@@ -80,11 +80,6 @@ path(
     views.cancel_order_item,
     name="cancel_order_item"
 ),
-path(
-    "order/item/cancel/<int:item_id>/",
-    views.cancel_order_item,
-    name="cancel_order_item"
-),
 
 path(
     "return-order/<int:order_id>/",
