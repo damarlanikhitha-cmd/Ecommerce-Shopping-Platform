@@ -775,7 +775,10 @@ def download_invoice(request, order_id):
 def contact(request):
     return render(request, "shop/contact.html")
 
+@login_required(login_url="/login/")
 def admin_dashboard(request):
+    if not request.user.is_staff:
+        return redirect("shop:home")
     total_orders = Order.objects.count()
     total_products = Product.objects.count()
     total_users = User.objects.count()
